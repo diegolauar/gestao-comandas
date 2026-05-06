@@ -1,4 +1,4 @@
-const { app, BrowserWindow, protocol, net } = require('electron')
+const { app, BrowserWindow, protocol } = require('electron')
 const path = require('path')
 const fs   = require('fs')
 const { randomUUID }         = require('crypto')
@@ -80,13 +80,17 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
-  protocol.handle('app-img', async (request) => {
+  protocol.handle('app-img', (request) => {
     try {
-      const imgName = decodeURIComponent(request.url.replace('app-img://', ''))
+      const url = new URL(request.url)
+      const imgName = decodeURIComponent(url.hostname)
       if (!imgName) return new Response(null, { status: 404 })
       const imgPath = path.join(app.getPath('userData'), 'images', imgName)
       if (!fs.existsSync(imgPath)) return new Response(null, { status: 404 })
-      return await net.fetch('file:///' + imgPath.replace(/\\/g, '/'))
+      const data = fs.readFileSync(imgPath)
+      const ext  = path.extname(imgName).slice(1).toLowerCase()
+      const mime = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' }[ext] || 'application/octet-stream'
+      return new Response(data, { headers: { 'Content-Type': mime } })
     } catch {
       return new Response(null, { status: 404 })
     }
