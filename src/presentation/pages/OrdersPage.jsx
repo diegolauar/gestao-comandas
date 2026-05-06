@@ -205,7 +205,7 @@ export default function OrdersPage() {
                 onClick={() => navigate('editorder', detail)}>
                 <Icon name="edit" size={14} /> Editar
               </button>
-              <button style={S.btn(colors.success)}
+              <button style={S.btn('#28664d')}
                 onClick={() => setFinalizing(true)}>
                 <Icon name="money" size={14} /> Fechar Comanda
               </button>

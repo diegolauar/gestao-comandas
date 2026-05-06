@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useToast } from '../context/ToastContext'
+import { categoryService } from '../services/categoryService'
 
 export function useCategories() {
   const [categories, setCategories] = useState([])
@@ -9,7 +10,7 @@ export function useCategories() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      setCategories(await window.api.categories.list())
+      setCategories(await categoryService.list())
     } catch (e) {
       showToast(e.message, 'error')
     } finally {
@@ -19,7 +20,7 @@ export function useCategories() {
 
   const save = useCallback(async (data) => {
     try {
-      await window.api.categories.save(data)
+      await categoryService.save(data)
       showToast(data.name + (data.isNew ? ' criada!' : ' atualizada!'))
       await load()
       return true
@@ -31,7 +32,7 @@ export function useCategories() {
 
   const remove = useCallback(async (id, name) => {
     try {
-      await window.api.categories.delete(id)
+      await categoryService.delete(id)
       showToast(`"${name}" removida!`)
       await load()
     } catch (e) {

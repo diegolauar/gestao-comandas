@@ -5,6 +5,7 @@ import { Icon, Field, Modal, ConfirmDialog, CategoryBadge, PageHeader, EmptyStat
 import { S, colors } from '../styles/theme'
 import { Money } from '@domain/value-objects'
 import { Product } from '@domain/entities'
+import { useToast } from '../context/ToastContext'
 
 const BLANK = { id: '', name: '', category: '', price: '', unit: 'Garrafa', stock: '', image: '' }
 
@@ -18,6 +19,7 @@ const ErrMsg = ({ msg }) => msg
 export default function ProductsPage() {
   const { products, load, save, remove } = useProducts()
   const { categories, load: loadCategories } = useCategories()
+  const showToast = useToast()
 
   const [search,      setSearch]      = useState('')
   const [modal,       setModal]       = useState(false)
@@ -73,8 +75,12 @@ export default function ProductsPage() {
     if (!file) return
     const reader = new FileReader()
     reader.onload = async (ev) => {
-      const filename = await window.api.images.save({ dataUrl: ev.target.result })
-      setForm(f => ({ ...f, image: filename }))
+      try {
+        const filename = await window.api.images.save({ dataUrl: ev.target.result })
+        setForm(f => ({ ...f, image: filename }))
+      } catch (err) {
+        showToast(err.message || 'Erro ao salvar imagem', 'error')
+      }
     }
     reader.readAsDataURL(file)
   }
