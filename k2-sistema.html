@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>K2 Emporium – Sistema de Vendas</title>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0f18;
+    --bg2: #13162100;
+    --card: #181c2a;
+    --card2: #1f2438;
+    --border: #2a2f47;
+    --text: #e8eaf2;
+    --muted: #8890a8;
+    --accent: oklch(65% 0.18 240);
+    --accent2: oklch(65% 0.18 160);
+    --danger: oklch(62% 0.2 25);
+    --warn: oklch(72% 0.18 75);
+    --sidebar-w: 220px;
+    --font: 'DM Sans', sans-serif;
+  }
+  html, body, #root { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); }
+  input, select, textarea, button { font-family: var(--font); }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel">
+/* ─── TWEAK DEFAULTS ─────────────────────────────────────────── */
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accentColor": "#4f8ef7",
+  "accentGreen": "#3fcf8e",
+  "fontSize": 14
+}/*EDITMODE-END*/;
+
+/* ─── ICONS (inline SVG) ─────────────────────────────────────── */
+const Icon = ({ name, size = 18, color = "currentColor" }) => {
+  const paths = {
+    dashboard: "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z",
+    products:  "M20 7l-8-4-8 4m16 0-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4",
+    orders:    "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2",
+    report:    "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
+    plus:      "M12 4v16m-8-8h16",
+    edit:      "M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z",
+    trash:     "M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6",
+    close:     "M6 18L18 6M6 6l12 12",
+    check:     "M5 13l4 4L19 7",
+    pack:      "M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z",
+    money:     "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z",
+    search:    "M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z",
+    warning:   "M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01",
+    img:       "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z",
+    download:  "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3",
+    upload:    "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12",
+    folder:    "M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z",
+    calendar:  "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z",
+    backup:    "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+         stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d={paths[name] || ""}/>
+    </svg>
+  );
+};
+
+/* ─── SEED DATA ──────────────────────────────────────────────── */
+const SEED_PRODUCTS = [
+  { id: "p1", name: "Cerveja Heineken 600ml", category: "Cerveja", price: 12.90, unit: "Garrafa", stock: 48, image: "" },
+  { id: "p2", name: "Brahma Fardo 12un", category: "Cerveja", unit: "Fardo", price: 38.00, stock: 20, image: "" },
+  { id: "p3", name: "Coca-Cola 2L", category: "Refrigerante", unit: "Garrafa", price: 9.50, stock: 36, image: "" },
+  { id: "p4", name: "Água Crystal 500ml cx24", category: "Água", unit: "Caixa", price: 22.00, stock: 15, image: "" },
+];
+
+const SEED_ORDERS = [
+  {
+    id: "o1",
+    client: "João Silva",
+    status: "entregue",
+    payment: "PIX",
+    items: [{ productId: "p1", name: "Cerveja Heineken 600ml", qty: 6, price: 12.90 }],
+    total: 77.40,
+    obs: "",
+    date: new Date(Date.now() - 86400000 * 2).toISOString(),
+  },
+  {
+    id: "o2",
+    client: "Maria Fernanda",
+    status: "aberto",
+    payment: "Dinheiro",
+    items: [
+      { productId: "p3", name: "Coca-Cola 2L", qty: 4, price: 9.50 },
+      { productId: "p4", name: "Água Crystal 500ml cx24", qty: 2, price: 22.00 },
+    ],
+    total: 82.00,
+    obs: "Entrega às 18h",
+    date: new Date().toISOString(),
+  },
+];
+
+/* ─── LOCAL STORAGE HELPERS ──────────────────────────────────── */
+function load(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch { return fallback; }
+}
+function save(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+}
+
+/* ─── SHARED STYLES ──────────────────────────────────────────── */
+const S = {
+  card: { background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12, padding: "20px 24px" },
+  input: {
+    background: "var(--card2)", border: "1px solid var(--border)", borderRadius: 8,
+    color: "var(--text)", padding: "9px 12px", fontSize: 14, width: "100%", outline: "none",
+    transition: "border-color .15s",
+  },
+  btn: (color = "var(--accent)") => ({
+    display: "inline-flex", alignItems: "center", gap: 6,
+    background: color, color: "#fff", border: "none", borderRadius: 8,
+    padding: "9px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer",
+    transition: "opacity .15s",
+  }),
+  btnGhost: {
+    display: "inline-flex", alignItems: "center", gap: 6,
+    background: "transparent", color: "var(--muted)", border: "1px solid var(--border)",
+    borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer",
+  },
+  badge: (color) => ({
+    display: "inline-block", padding: "2px 10px", borderRadius: 99,
+    fontSize: 12, fontWeight: 600, background: color + "22", color: color,
+  }),
+};
+
+/* ─── MODAL ──────────────────────────────────────────────────── */
+const Modal = ({ title, onClose, children, width = 520 }) => (
+  <div style={{
+    position: "fixed", inset: 0, background: "rgba(0,0,0,.65)", zIndex: 1000,
+    display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+  }} onClick={onClose}>
+    <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 14,
+      width: "100%", maxWidth: width, maxHeight: "90vh", overflowY: "auto" }}
+      onClick={e => e.stopPropagation()}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
+        padding: "18px 24px", borderBottom: "1px solid var(--border)" }}>
+        <span style={{ fontWeight: 700, fontSize: 16 }}>{title}</span>
+        <button style={{ ...S.btnGhost, border: "none", padding: 4 }} onClick={onClose}>
+          <Icon name="close" size={18}/>
+        </button>
+      </div>
+      <div style={{ padding: "24px" }}>{children}</div>
+    </div>
+  </div>
+);
+
+/* ─── LABEL + INPUT ──────────────────────────────────────────── */
+const Field = ({ label, children }) => (
+  <div style={{ marginBottom: 16 }}>
+    <label style={{ display: "block", fontSize: 12, color: "var(--muted)", marginBottom: 6, fontWeight: 500, textTransform: "uppercase", letterSpacing: ".05em" }}>{label}</label>
+    {children}
+  </div>
+);
+
+/* ─── STATUS BADGE ───────────────────────────────────────────── */
+const StatusBadge = ({ status }) => {
+  const map = { aberto: ["var(--warn)", "Aberto"], entregue: ["var(--accent2)", "Entregue"], cancelado: ["var(--danger)", "Cancelado"] };
+  const [color, label] = map[status] || ["var(--muted)", status];
+  return <span style={S.badge(color)}>{label}</span>;
+};
+
+/* ─── CATEGORY BADGE ─────────────────────────────────────────── */
+const CatBadge = ({ cat }) => {
+  const map = { "Cerveja": "#f4a261", "Refrigerante": "#e63946", "Água": "var(--accent)", "Vinho": "#c77dff", "Destilado": "#f9c74f", "Outro": "var(--muted)" };
+  const color = map[cat] || "var(--muted)";
+  return <span style={S.badge(color)}>{cat}</span>;
+};
+
+/* ─── CONFIRM DIALOG ─────────────────────────────────────────── */
+const Confirm = ({ msg, onYes, onNo }) => (
+  <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.7)", zIndex: 2000,
+    display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ ...S.card, maxWidth: 360, width: "100%", textAlign: "center" }}>
+      <div style={{ marginBottom: 12 }}><Icon name="warning" size={32} color="var(--warn)"/></div>
+      <p style={{ marginBottom: 20, color: "var(--text)", lineHeight: 1.5 }}>{msg}</p>
+      <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+        <button style={S.btn("var(--danger)")} onClick={onYes}>Confirmar</button>
+        <button style={S.btnGhost} onClick={onNo}>Cancelar</button>
+      </div>
+    </div>
+  </div>
+);
+
+/* ─── TOAST ──────────────────────────────────────────────────── */
+const Toast = ({ msg, type }) => (
+  <div style={{
+    position: "fixed", bottom: 28, right: 28, zIndex: 3000,
+    background: type === "error" ? "var(--danger)" : "var(--accent2)",
+    color: "#fff", padding: "12px 20px", borderRadius: 10, fontWeight: 600,
+    fontSize: 14, boxShadow: "0 4px 24px rgba(0,0,0,.4)",
+    animation: "slideUp .25s ease",
+  }}>{msg}</div>
+);
+
+/* ══════════════════════════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════════════════════════ */
+const Dashboard = ({ products, orders, setPage }) => {
+  const today = new Date().toDateString();
+  const todayOrders = orders.filter(o => new Date(o.date).toDateString() === today);
+  const totalToday = todayOrders.reduce((s, o) => s + o.total, 0);
+  const openOrders = orders.filter(o => o.status === "aberto").length;
+  const deliveredTotal = orders.filter(o => o.status === "entregue").reduce((s, o) => s + o.total, 0);
+  const lowStock = products.filter(p => p.stock <= 5);
+
+  const StatCard = ({ label, value, sub, color, icon }) => (
+    <div style={{ ...S.card, flex: 1, minWidth: 180 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+        <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500, textTransform: "uppercase", letterSpacing: ".05em" }}>{label}</span>
+        <div style={{ background: color + "22", borderRadius: 8, padding: 7 }}>
+          <Icon name={icon} size={16} color={color}/>
+        </div>
+      </div>
+      <div style={{ fontSize: 28, fontWeight: 700, color }}>{value}</div>
+      {sub && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>{sub}</div>}
+    </div>
+  );
+
+  const fmt = (n) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  return (
+    <div style={{ padding: "32px 28px", maxWidth: 1100 }}>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 700 }}>Dashboard</h1>
+        <p style={{ color: "var(--muted)", fontSize: 14, marginTop: 4 }}>
+          {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
+        </p>
+      </div>
+
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 28 }}>
+        <StatCard label="Vendas hoje" value={fmt(totalToday)} sub={`${todayOrders.length} pedido(s)`} color="var(--accent2)" icon="money"/>
+        <StatCard label="Total entregue" value={fmt(deliveredTotal)} sub="todos os tempos" color="var(--accent)" icon="check"/>
+        <StatCard label="Pedidos abertos" value={openOrders} sub="aguardando entrega" color="var(--warn)" icon="orders"/>
+        <StatCard label="Produtos" value={products.length} sub={`${lowStock.length} com estoque baixo`} color={lowStock.length > 0 ? "var(--danger)" : "var(--muted)"} icon="pack"/>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        {/* Pedidos do dia */}
+        <div style={S.card}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <span style={{ fontWeight: 600 }}>Pedidos de hoje</span>
+            <button style={{ ...S.btnGhost, fontSize: 12, padding: "5px 12px" }} onClick={() => setPage("orders")}>Ver todos</button>
+          </div>
+          {todayOrders.length === 0
+            ? <p style={{ color: "var(--muted)", fontSize: 14 }}>Nenhum pedido hoje ainda.</p>
+            : todayOrders.slice(0, 5).map(o => (
+              <div key={o.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
+                padding: "10px 0", borderBottom: "1px solid var(--border)", gap: 8 }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>{o.client}</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)" }}>{o.items.length} item(s)</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontWeight: 700, fontSize: 14 }}>{fmt(o.total)}</div>
+                  <StatusBadge status={o.status}/>
+                </div>
+              </div>
+            ))}
+        </div>
+
+        {/* Estoque baixo */}
+        <div style={S.card}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <span style={{ fontWeight: 600 }}>Estoque baixo</span>
+            <button style={{ ...S.btnGhost, fontSize: 12, padding: "5px 12px" }} onClick={() => setPage("products")}>Ver produtos</button>
+          </div>
+          {lowStock.length === 0
+            ? <p style={{ color: "var(--muted)", fontSize: 14 }}>Todos os produtos com estoque normal.</p>
+            : lowStock.map(p => (
+              <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
+                padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                <div style={{ fontSize: 14, fontWeight: 500 }}>{p.name}</div>
+                <span style={{ ...S.badge("var(--danger)"), fontSize: 12 }}>{p.stock} un.</span>
+              </div>
+            ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════════════════
+   PRODUCTS
+══════════════════════════════════════════════════════════════ */
+const Products = ({ products, setProducts, showToast }) => {
+  const { useState: uS, useRef } = React;
+  const [modal, setModal] = uS(null); // null | 'new' | product
+  const [search, setSearch] = uS("");
+  const [confirm, setConfirm] = uS(null);
+  const imgRef = useRef();
+  const CATEGORIES = ["Cerveja", "Refrigerante", "Água", "Vinho", "Destilado", "Outro"];
+  const UNITS = ["Garrafa", "Lata", "Caixa", "Fardo", "Barril", "Unidade"];
+
+  const blank = { id: "", name: "", category: "Cerveja", price: "", unit: "Garrafa", stock: "", image: "" };
+  const [form, setForm] = uS(blank);
+
+  const openNew = () => { setForm({ ...blank, id: "p" + Date.now() }); setModal("form"); };
+  const openEdit = (p) => { setForm({ ...p }); setModal("form"); };
+
+  const handleImg = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => setForm(f => ({ ...f, image: ev.target.result }));
+    reader.readAsDataURL(file);
+  };
+
+  const save = () => {
+    if (!form.name.trim()) return showToast("Nome obrigatório", "error");
+    if (!form.price || isNaN(form.price)) return showToast("Preço inválido", "error");
+    setProducts(prev => {
+      const exists = prev.find(p => p.id === form.id);
+      const updated = exists ? prev.map(p => p.id === form.id ? { ...form, price: +form.price, stock: +form.stock || 0 } : p)
+                              : [...prev, { ...form, price: +form.price, stock: +form.stock || 0 }];
+      return updated;
+    });
+    setModal(null);
+    showToast(form.name + " salvo!", "ok");
+  };
+
+  const del = (id) => {
+    setProducts(prev => prev.filter(p => p.id !== id));
+    setConfirm(null);
+    showToast("Produto removido", "ok");
+  };
+
+  const filtered = products.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase()) ||
+    p.category.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div style={{ padding: "32px 28px", maxWidth: 1100 }}>
+      {confirm && <Confirm msg={`Remover "${confirm.name}"?`} onYes={() => del(confirm.id)} onNo={() => setConfirm(null)}/>}
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 700 }}>Produtos</h1>
+          <p style={{ color: "var(--muted)", fontSize: 14, marginTop: 4 }}>{products.length} produto(s) cadastrado(s)</p>
+        </div>
+        <button style={S.btn()} onClick={openNew}><Icon name="plus" size={16}/> Novo Produto</button>
+      </div>
+
+      {/* Search */}
+      <div style={{ position: "relative", marginBottom: 20, maxWidth: 360 }}>
+        <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
+          <Icon name="search" size={16} color="var(--muted)"/>
+        </div>
+        <input style={{ ...S.input, paddingLeft: 34 }} placeholder="Buscar produto..." value={search}
+          onChange={e => setSearch(e.target.value)}/>
+      </div>
+
+      {/* Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+        {filtered.map(p => (
+          <div key={p.id} style={{ ...S.card, display: "flex", flexDirection: "column", gap: 0 }}>
+            {/* Image */}
+            <div style={{ background: "var(--card2)", borderRadius: 8, height: 120, marginBottom: 14,
+              display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+              {p.image
+                ? <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
+                : <Icon name="img" size={32} color="var(--border)"/>}
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+              <span style={{ fontWeight: 600, fontSize: 15, lineHeight: 1.3 }}>{p.name}</span>
+            </div>
+            <CatBadge cat={p.category}/>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, alignItems: "center" }}>
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: "var(--accent2)" }}>
+                  {(+p.price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </div>
+                <div style={{ fontSize: 12, color: "var(--muted)" }}>por {p.unit}</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: p.stock <= 5 ? "var(--danger)" : "var(--text)" }}>
+                  {p.stock} em estoque
+                </div>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+              <button style={{ ...S.btnGhost, flex: 1, justifyContent: "center" }} onClick={() => openEdit(p)}>
+                <Icon name="edit" size={14}/> Editar
+              </button>
+              <button style={{ ...S.btnGhost, color: "var(--danger)", borderColor: "var(--danger)22", padding: "8px 10px" }}
+                onClick={() => setConfirm(p)}>
+                <Icon name="trash" size={14}/>
+              </button>
+            </div>
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <div style={{ gridColumn: "1/-1", textAlign: "center", padding: "60px 0", color: "var(--muted)" }}>
+            Nenhum produto encontrado.
+          </div>
+        )}
+      </div>
+
+      {/* Modal form */}
+      {modal === "form" && (
+        <Modal title={form.name ? "Editar Produto" : "Novo Produto"} onClose={() => setModal(null)}>
+          <Field label="Nome do Produto">
+            <input style={S.input} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Heineken 600ml"/>
+          </Field>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Field label="Categoria">
+              <select style={S.input} value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
+                {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+              </select>
+            </Field>
+            <Field label="Unidade">
+              <select style={S.input} value={form.unit} onChange={e => setForm(f => ({ ...f, unit: e.target.value }))}>
+                {UNITS.map(u => <option key={u}>{u}</option>)}
+              </select>
+            </Field>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Field label="Preço de Venda (R$)">
+              <input style={S.input} type="number" min="0" step="0.01" value={form.price}
+                onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="0,00"/>
+            </Field>
+            <Field label="Estoque Inicial">
+              <input style={S.input} type="number" min="0" value={form.stock}
+                onChange={e => setForm(f => ({ ...f, stock: e.target.value }))} placeholder="0"/>
+            </Field>
+          </div>
+          <Field label="Foto do Produto">
+            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+              <div style={{ width: 64, height: 64, background: "var(--card2)", borderRadius: 8,
+                display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                {form.image ? <img src={form.image} style={{ width: "100%", height: "100%", objectFit: "cover" }}/> : <Icon name="img" size={24} color="var(--border)"/>}
+              </div>
+              <div>
+                <button style={S.btn("var(--card2)")} onClick={() => imgRef.current.click()}>
+                  Escolher imagem
+                </button>
+                {form.image && <button style={{ ...S.btnGhost, marginLeft: 8, fontSize: 12 }} onClick={() => setForm(f => ({ ...f, image: "" }))}>Remover</button>}
+                <input ref={imgRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleImg}/>
+              </div>
+            </div>
+          </Field>
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 8 }}>
+            <button style={S.btnGhost} onClick={() => setModal(null)}>Cancelar</button>
+            <button style={S.btn()} onClick={save}><Icon name="check" size={14}/> Salvar Produto</button>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════════════════
+   NEW ORDER
+══════════════════════════════════════════════════════════════ */
+const NewOrder = ({ products, setProducts, setOrders, showToast, setPage }) => {
+  const { useState: uS } = React;
+  const PAYMENTS = ["Dinheiro", "PIX", "Cartão de Débito", "Cartão de Crédito"];
+  const blank = { client: "", payment: "PIX", obs: "", items: [] };
+  const [form, setForm] = uS(blank);
+  const [selProd, setSelProd] = uS("");
+  const [selQty, setSelQty] = uS(1);
+
+  const addItem = () => {
+    if (!selProd) return showToast("Selecione um produto", "error");
+    const prod = products.find(p => p.id === selProd);
+    if (!prod) return;
+    if (prod.stock < selQty) return showToast(`Estoque insuficiente (${prod.stock} disponíveis)`, "error");
+    setForm(f => {
+      const exists = f.items.find(i => i.productId === selProd);
+      if (exists) {
+        return { ...f, items: f.items.map(i => i.productId === selProd ? { ...i, qty: i.qty + +selQty } : i) };
+      }
+      return { ...f, items: [...f.items, { productId: selProd, name: prod.name, qty: +selQty, price: prod.price }] };
+    });
+    setSelProd(""); setSelQty(1);
+  };
+
+  const removeItem = (pid) => setForm(f => ({ ...f, items: f.items.filter(i => i.productId !== pid) }));
+  const total = form.items.reduce((s, i) => s + i.qty * i.price, 0);
+  const fmt = n => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  const submit = () => {
+    if (!form.client.trim()) return showToast("Informe o nome do cliente", "error");
+    if (form.items.length === 0) return showToast("Adicione ao menos um item", "error");
+    // Baixa de estoque
+    setProducts(prev => prev.map(p => {
+      const item = form.items.find(i => i.productId === p.id);
+      return item ? { ...p, stock: p.stock - item.qty } : p;
+    }));
+    const order = {
+      id: "o" + Date.now(),
+      client: form.client,
+      status: "aberto",
+      payment: form.payment,
+      items: form.items,
+      total,
+      obs: form.obs,
+      date: new Date().toISOString(),
+    };
+    setOrders(prev => [order, ...prev]);
+    showToast("Pedido registrado!", "ok");
+    setForm(blank);
+    setPage("orders");
+  };
+
+  return (
+    <div style={{ padding: "32px 28px", maxWidth: 720 }}>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 700 }}>Novo Pedido</h1>
+        <p style={{ color: "var(--muted)", fontSize: 14, marginTop: 4 }}>Registre um novo pedido com baixa automática de estoque</p>
+      </div>
+
+      <div style={S.card}>
+        <Field label="Nome do Cliente">
+          <input style={S.input} value={form.client} onChange={e => setForm(f => ({ ...f, client: e.target.value }))} placeholder="Nome do cliente"/>
+        </Field>
+        <Field label="Forma de Pagamento">
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {PAYMENTS.map(p => (
+              <button key={p} style={{
+                ...S.btnGhost,
+                background: form.payment === p ? "var(--accent)" : "transparent",
+                color: form.payment === p ? "#fff" : "var(--muted)",
+                borderColor: form.payment === p ? "var(--accent)" : "var(--border)",
+              }} onClick={() => setForm(f => ({ ...f, payment: p }))}>{p}</button>
+            ))}
+          </div>
+        </Field>
+
+        <div style={{ borderTop: "1px solid var(--border)", margin: "20px 0 20px", paddingTop: 20 }}>
+          <div style={{ fontWeight: 600, marginBottom: 14, fontSize: 14, textTransform: "uppercase", letterSpacing: ".05em", color: "var(--muted)" }}>Itens do Pedido</div>
+
+          {/* Add product row */}
+          <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+            <select style={{ ...S.input, flex: 1 }} value={selProd} onChange={e => setSelProd(e.target.value)}>
+              <option value="">Selecionar produto...</option>
+              {products.map(p => <option key={p.id} value={p.id}>{p.name} — {fmt(p.price)} ({p.stock} est.)</option>)}
+            </select>
+            <input style={{ ...S.input, width: 80 }} type="number" min="1" value={selQty}
+              onChange={e => setSelQty(+e.target.value)}/>
+            <button style={S.btn()} onClick={addItem}><Icon name="plus" size={16}/></button>
+          </div>
+
+          {/* Items list */}
+          {form.items.length === 0
+            ? <div style={{ textAlign: "center", padding: "24px 0", color: "var(--muted)", fontSize: 14, background: "var(--card2)", borderRadius: 8 }}>
+                Nenhum item adicionado
+              </div>
+            : <div style={{ borderRadius: 8, overflow: "hidden", border: "1px solid var(--border)" }}>
+                {form.items.map((item, i) => (
+                  <div key={item.productId} style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "12px 16px",
+                    background: i % 2 === 0 ? "var(--card2)" : "transparent",
+                  }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{item.name}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted)" }}>{item.qty}x {fmt(item.price)}</div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <span style={{ fontWeight: 700 }}>{fmt(item.qty * item.price)}</span>
+                      <button style={{ ...S.btnGhost, color: "var(--danger)", border: "none", padding: 4 }} onClick={() => removeItem(item.productId)}>
+                        <Icon name="close" size={14}/>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center",
+                  padding: "14px 16px", borderTop: "1px solid var(--border)", background: "var(--card2)" }}>
+                  <span style={{ fontWeight: 700, fontSize: 18 }}>Total: {fmt(total)}</span>
+                </div>
+              </div>
+          }
+        </div>
+
+        <Field label="Observações">
+          <textarea style={{ ...S.input, minHeight: 70, resize: "vertical" }} value={form.obs}
+            onChange={e => setForm(f => ({ ...f, obs: e.target.value }))} placeholder="Ex: Entrega às 18h, portão verde..."/>
+        </Field>
+
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 8 }}>
+          <button style={S.btnGhost} onClick={() => setPage("orders")}>Cancelar</button>
+          <button style={S.btn("var(--accent2)")} onClick={submit}><Icon name="check" size={16}/> Registrar Pedido</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════════════════
+   ORDERS LIST
+══════════════════════════════════════════════════════════════ */
+const Orders = ({ orders, setOrders, setPage, showToast }) => {
+  const { useState: uS } = React;
+  const [search, setSearch] = uS("");
+  const [statusFilter, setStatusFilter] = uS("todos");
+  const [detail, setDetail] = uS(null);
+  const fmt = n => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  const STATUS = ["todos", "aberto", "entregue", "cancelado"];
+
+  const changeStatus = (id, status) => {
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+    showToast("Status atualizado!", "ok");
+    if (detail?.id === id) setDetail(prev => ({ ...prev, status }));
+  };
+
+  const filtered = orders
+    .filter(o => statusFilter === "todos" || o.status === statusFilter)
+    .filter(o => o.client.toLowerCase().includes(search.toLowerCase()));
+
+  const total = filtered.reduce((s, o) => s + o.total, 0);
+
+  return (
+    <div style={{ padding: "32px 28px", maxWidth: 1100 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 700 }}>Pedidos</h1>
+          <p style={{ color: "var(--muted)", fontSize: 14, marginTop: 4 }}>{filtered.length} pedido(s) — {fmt(total)}</p>
+        </div>
+        <button style={S.btn("var(--accent2)")} onClick={() => setPage("neworder")}><Icon name="plus" size={16}/> Novo Pedido</button>
+      </div>
+
+      {/* Filters */}
+      <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+        <div style={{ position: "relative", flex: 1, maxWidth: 320 }}>
+          <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
+            <Icon name="search" size={16} color="var(--muted)"/>
+          </div>
+          <input style={{ ...S.input, paddingLeft: 34 }} placeholder="Buscar por cliente..." value={search}
+            onChange={e => setSearch(e.target.value)}/>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {STATUS.map(s => (
+            <button key={s} style={{
+              ...S.btnGhost, textTransform: "capitalize",
+              background: statusFilter === s ? "var(--accent)" : "transparent",
+              color: statusFilter === s ? "#fff" : "var(--muted)",
+              borderColor: statusFilter === s ? "var(--accent)" : "var(--border)",
+            }} onClick={() => setStatusFilter(s)}>{s}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Table */}
+      <div style={{ ...S.card, padding: 0, overflow: "hidden" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+          <thead>
+            <tr style={{ background: "var(--card2)", textAlign: "left" }}>
+              {["Cliente", "Data/Hora", "Itens", "Pagamento", "Total", "Status", ""].map(h => (
+                <th key={h} style={{ padding: "12px 16px", color: "var(--muted)", fontWeight: 600,
+                  fontSize: 12, textTransform: "uppercase", letterSpacing: ".05em" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 && (
+              <tr><td colSpan={7} style={{ textAlign: "center", padding: "40px 0", color: "var(--muted)" }}>Nenhum pedido encontrado</td></tr>
+            )}
+            {filtered.map((o, i) => (
+              <tr key={o.id} style={{ borderTop: "1px solid var(--border)", background: i % 2 ? "var(--card2)22" : "transparent",
+                cursor: "pointer", transition: "background .1s" }}
+                onClick={() => setDetail(o)}>
+                <td style={{ padding: "14px 16px", fontWeight: 600 }}>{o.client}</td>
+                <td style={{ padding: "14px 16px", color: "var(--muted)", whiteSpace: "nowrap" }}>
+                  {new Date(o.date).toLocaleDateString("pt-BR")} {new Date(o.date).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                </td>
+                <td style={{ padding: "14px 16px", color: "var(--muted)" }}>{o.items.length} item(s)</td>
+                <td style={{ padding: "14px 16px" }}>{o.payment}</td>
+                <td style={{ padding: "14px 16px", fontWeight: 700, color: "var(--accent2)" }}>{fmt(o.total)}</td>
+                <td style={{ padding: "14px 16px" }}><StatusBadge status={o.status}/></td>
+                <td style={{ padding: "14px 16px" }}>
+                  <button style={{ ...S.btnGhost, fontSize: 12, padding: "5px 10px" }} onClick={e => { e.stopPropagation(); setDetail(o); }}>Ver</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Order Detail Modal */}
+      {detail && (
+        <Modal title={`Pedido — ${detail.client}`} onClose={() => setDetail(null)} width={560}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+            <div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>Data</div>
+              <div style={{ fontWeight: 600 }}>{new Date(detail.date).toLocaleString("pt-BR")}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>Pagamento</div>
+              <div style={{ fontWeight: 600 }}>{detail.payment}</div>
+            </div>
+            <div>
+              <StatusBadge status={detail.status}/>
+            </div>
+          </div>
+
+          <div style={{ background: "var(--card2)", borderRadius: 8, padding: 16, marginBottom: 16 }}>
+            {detail.items.map(item => (
+              <div key={item.productId} style={{ display: "flex", justifyContent: "space-between",
+                padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
+                <div>
+                  <div style={{ fontWeight: 500 }}>{item.name}</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)" }}>{item.qty}x {fmt(item.price)}</div>
+                </div>
+                <span style={{ fontWeight: 700 }}>{fmt(item.qty * item.price)}</span>
+              </div>
+            ))}
+            <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: 12 }}>
+              <span style={{ fontWeight: 700, fontSize: 18 }}>Total: {fmt(detail.total)}</span>
+            </div>
+          </div>
+
+          {detail.obs && (
+            <div style={{ background: "var(--card2)", borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 13, color: "var(--muted)" }}>
+              <strong style={{ color: "var(--text)" }}>Obs:</strong> {detail.obs}
+            </div>
+          )}
+
+          <Field label="Alterar Status">
+            <div style={{ display: "flex", gap: 8 }}>
+              {["aberto", "entregue", "cancelado"].map(s => (
+                <button key={s} style={{
+                  ...S.btnGhost, flex: 1, justifyContent: "center", textTransform: "capitalize",
+                  background: detail.status === s ? "var(--accent)" : "transparent",
+                  color: detail.status === s ? "#fff" : "var(--muted)",
+                  borderColor: detail.status === s ? "var(--accent)" : "var(--border)",
+                }} onClick={() => changeStatus(detail.id, s)}>{s}</button>
+              ))}
+            </div>
+          </Field>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════════════════
+   REPORTS
+══════════════════════════════════════════════════════════════ */
+const Reports = ({ orders, products }) => {
+  const { useState: uS } = React;
+  const [range, setRange] = uS("week");
+  const fmt = n => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  const now = new Date();
+  const ranges = { today: 1, week: 7, month: 30, all: 99999 };
+  const since = new Date(now - ranges[range] * 86400000);
+  const filtered = orders.filter(o => new Date(o.date) >= since && o.status !== "cancelado");
+
+  const totalSales = filtered.reduce((s, o) => s + o.total, 0);
+  const totalOrders = filtered.length;
+  const avgTicket = totalOrders ? totalSales / totalOrders : 0;
+
+  // Top products
+  const prodMap = {};
+  filtered.forEach(o => o.items.forEach(i => {
+    if (!prodMap[i.name]) prodMap[i.name] = { name: i.name, qty: 0, total: 0 };
+    prodMap[i.name].qty += i.qty;
+    prodMap[i.name].total += i.qty * i.price;
+  }));
+  const topProds = Object.values(prodMap).sort((a, b) => b.total - a.total).slice(0, 8);
+
+  // Payment breakdown
+  const payMap = {};
+  filtered.forEach(o => {
+    if (!payMap[o.payment]) payMap[o.payment] = 0;
+    payMap[o.payment] += o.total;
+  });
+
+  // Daily sales (last 7)
+  const dailyMap = {};
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now - i * 86400000);
+    const key = d.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit" });
+    dailyMap[key] = 0;
+  }
+  filtered.forEach(o => {
+    const d = new Date(o.date);
+    const key = d.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit" });
+    if (dailyMap[key] !== undefined) dailyMap[key] += o.total;
+  });
+  const dailyData = Object.entries(dailyMap);
+  const maxDaily = Math.max(...dailyData.map(([,v]) => v), 1);
+
+  return (
+    <div style={{ padding: "32px 28px", maxWidth: 1100 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 700 }}>Relatórios</h1>
+          <p style={{ color: "var(--muted)", fontSize: 14, marginTop: 4 }}>Análise de vendas</p>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {[["today","Hoje"],["week","7 dias"],["month","30 dias"],["all","Tudo"]].map(([k,l]) => (
+            <button key={k} style={{
+              ...S.btnGhost,
+              background: range === k ? "var(--accent)" : "transparent",
+              color: range === k ? "#fff" : "var(--muted)",
+              borderColor: range === k ? "var(--accent)" : "var(--border)",
+            }} onClick={() => setRange(k)}>{l}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* KPIs */}
+      <div style={{ display: "flex", gap: 14, marginBottom: 24, flexWrap: "wrap" }}>
+        {[
+          { label: "Faturamento", val: fmt(totalSales), color: "var(--accent2)" },
+          { label: "Pedidos", val: totalOrders, color: "var(--accent)" },
+          { label: "Ticket Médio", val: fmt(avgTicket), color: "var(--warn)" },
+        ].map(k => (
+          <div key={k.label} style={{ ...S.card, flex: 1, minWidth: 180 }}>
+            <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 10 }}>{k.label}</div>
+            <div style={{ fontSize: 26, fontWeight: 700, color: k.color }}>{k.val}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+        {/* Bar chart */}
+        <div style={S.card}>
+          <div style={{ fontWeight: 600, marginBottom: 18 }}>Vendas dos últimos 7 dias</div>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 120 }}>
+            {dailyData.map(([day, val]) => (
+              <div key={day} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                <div style={{ fontSize: 10, color: "var(--muted)" }}>{val > 0 ? fmt(val).replace("R$","").trim() : ""}</div>
+                <div style={{ width: "100%", borderRadius: "4px 4px 0 0", transition: "height .3s",
+                  background: val > 0 ? "var(--accent)" : "var(--border)",
+                  height: `${Math.max((val / maxDaily) * 80, val > 0 ? 4 : 2)}px` }}/>
+                <div style={{ fontSize: 11, color: "var(--muted)", textAlign: "center" }}>{day}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Payment breakdown */}
+        <div style={S.card}>
+          <div style={{ fontWeight: 600, marginBottom: 18 }}>Formas de Pagamento</div>
+          {Object.keys(payMap).length === 0
+            ? <p style={{ color: "var(--muted)", fontSize: 14 }}>Sem dados no período</p>
+            : Object.entries(payMap).map(([pay, val]) => {
+              const pct = totalSales ? (val / totalSales) * 100 : 0;
+              return (
+                <div key={pay} style={{ marginBottom: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 5 }}>
+                    <span>{pay}</span><span style={{ fontWeight: 600 }}>{fmt(val)} ({pct.toFixed(0)}%)</span>
+                  </div>
+                  <div style={{ background: "var(--card2)", borderRadius: 99, height: 6 }}>
+                    <div style={{ width: `${pct}%`, height: "100%", borderRadius: 99, background: "var(--accent)", transition: "width .4s" }}/>
+                  </div>
+                </div>
+              );
+            })}
+        </div>
+      </div>
+
+      {/* Top products */}
+      <div style={S.card}>
+        <div style={{ fontWeight: 600, marginBottom: 18 }}>Produtos mais vendidos</div>
+        {topProds.length === 0
+          ? <p style={{ color: "var(--muted)", fontSize: 14 }}>Sem vendas no período.</p>
+          : <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+              <thead>
+                <tr style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>
+                  {["#","Produto","Qtd. vendida","Faturamento"].map(h => (
+                    <th key={h} style={{ padding: "8px 12px", color: "var(--muted)", fontWeight: 600, fontSize: 12 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {topProds.map((p, i) => (
+                  <tr key={p.name} style={{ borderBottom: "1px solid var(--border)" }}>
+                    <td style={{ padding: "10px 12px", color: "var(--muted)", fontWeight: 700 }}>#{i + 1}</td>
+                    <td style={{ padding: "10px 12px", fontWeight: 600 }}>{p.name}</td>
+                    <td style={{ padding: "10px 12px", color: "var(--muted)" }}>{p.qty}</td>
+                    <td style={{ padding: "10px 12px", fontWeight: 700, color: "var(--accent2)" }}>{fmt(p.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+        }
+      </div>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════════════════
+   BACKUP / ARQUIVOS
+══════════════════════════════════════════════════════════════ */
+const Backup = ({ products, orders, setProducts, setOrders, showToast }) => {
+  const { useState: uS, useRef } = React;
+  const importRef = useRef();
+  const [importing, setImporting] = uS(false);
+  const [preview, setPreview] = uS(null); // dados lidos do arquivo antes de confirmar
+  const fmt = n => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  // ── helpers de data ──────────────────────────────────────────
+  const pad = n => String(n).padStart(2, "0");
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = pad(now.getMonth() + 1);
+  const dd = pad(now.getDate());
+  const todayLabel = `${dd}-${mm}-${yyyy}`;
+  const monthLabel = `${yyyy}-${mm}`;
+
+  // ── gera nome de arquivo no padrão pasta/dia ─────────────────
+  const fileName = (label) => `K2_${label}.json`;
+
+  // ── exporta pedidos de hoje ──────────────────────────────────
+  const exportToday = () => {
+    const todayStr = now.toDateString();
+    const todayOrders = orders.filter(o => new Date(o.date).toDateString() === todayStr);
+    if (todayOrders.length === 0) return showToast("Nenhum pedido hoje para exportar", "error");
+    const total = todayOrders.reduce((s, o) => s + o.total, 0);
+    const payload = {
+      tipo: "backup_diario",
+      loja: "K2 Emporium",
+      pasta: monthLabel,
+      arquivo: fileName(todayLabel),
+      data: todayLabel,
+      geradoEm: new Date().toISOString(),
+      resumo: {
+        totalPedidos: todayOrders.length,
+        totalVendas: total,
+        pedidosAbertos: todayOrders.filter(o => o.status === "aberto").length,
+        pedidosEntregues: todayOrders.filter(o => o.status === "entregue").length,
+      },
+      pedidos: todayOrders,
+      produtos: products,
+    };
+    downloadJSON(payload, fileName(todayLabel));
+    showToast(`Arquivo do dia ${todayLabel} exportado!`, "ok");
+  };
+
+  // ── exporta todo o mês atual ─────────────────────────────────
+  const exportMonth = () => {
+    const monthOrders = orders.filter(o => {
+      const d = new Date(o.date);
+      return d.getFullYear() === yyyy && d.getMonth() === now.getMonth();
+    });
+    if (monthOrders.length === 0) return showToast("Nenhum pedido este mês", "error");
+
+    // agrupa por dia
+    const byDay = {};
+    monthOrders.forEach(o => {
+      const d = new Date(o.date);
+      const key = `${pad(d.getDate())}-${pad(d.getMonth()+1)}-${d.getFullYear()}`;
+      if (!byDay[key]) byDay[key] = [];
+      byDay[key].push(o);
+    });
+
+    const payload = {
+      tipo: "backup_mensal",
+      loja: "K2 Emporium",
+      pasta: monthLabel,
+      arquivo: `K2_${monthLabel}_completo.json`,
+      mes: monthLabel,
+      geradoEm: new Date().toISOString(),
+      resumo: {
+        totalPedidos: monthOrders.length,
+        totalVendas: monthOrders.reduce((s, o) => s + o.total, 0),
+        diasComVenda: Object.keys(byDay).length,
+      },
+      porDia: Object.entries(byDay).map(([dia, pedidos]) => ({
+        dia,
+        totalPedidos: pedidos.length,
+        totalVendas: pedidos.reduce((s, o) => s + o.total, 0),
+        pedidos,
+      })),
+      produtos: products,
+    };
+    downloadJSON(payload, `K2_${monthLabel}_completo.json`);
+    showToast(`Backup mensal de ${monthLabel} exportado!`, "ok");
+  };
+
+  // ── exporta tudo (todos os pedidos) ─────────────────────────
+  const exportAll = () => {
+    const payload = {
+      tipo: "backup_completo",
+      loja: "K2 Emporium",
+      geradoEm: new Date().toISOString(),
+      totalPedidos: orders.length,
+      totalProdutos: products.length,
+      pedidos: orders,
+      produtos: products,
+    };
+    downloadJSON(payload, `K2_backup_completo_${todayLabel}.json`);
+    showToast("Backup completo exportado!", "ok");
+  };
+
+  // ── helper download ──────────────────────────────────────────
+  const downloadJSON = (data, name) => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ── importar arquivo ─────────────────────────────────────────
+  const handleFileChange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        setPreview({ data, fileName: file.name });
+      } catch {
+        showToast("Arquivo inválido ou corrompido", "error");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  const confirmImport = () => {
+    if (!preview) return;
+    const { data } = preview;
+    let importedOrders = 0, importedProducts = 0;
+
+    if (data.pedidos && Array.isArray(data.pedidos)) {
+      setOrders(prev => {
+        const existingIds = new Set(prev.map(o => o.id));
+        const novos = data.pedidos.filter(o => !existingIds.has(o.id));
+        importedOrders = novos.length;
+        return [...novos, ...prev];
+      });
+    }
+    if (data.produtos && Array.isArray(data.produtos)) {
+      setProducts(prev => {
+        const existingIds = new Set(prev.map(p => p.id));
+        const novos = data.produtos.filter(p => !existingIds.has(p.id));
+        importedProducts = novos.length;
+        return [...prev, ...novos];
+      });
+    }
+    setPreview(null);
+    showToast(`Importado: ${importedOrders} pedido(s), ${importedProducts} produto(s) novo(s)`, "ok");
+  };
+
+  // ── organiza pedidos por mês para a listagem ─────────────────
+  const ordersByMonth = {};
+  orders.forEach(o => {
+    const d = new Date(o.date);
+    const key = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+    if (!ordersByMonth[key]) ordersByMonth[key] = [];
+    ordersByMonth[key].push(o);
+  });
+  const months = Object.keys(ordersByMonth).sort().reverse();
+
+  return (
+    <div style={{ padding: "32px 28px", maxWidth: 900 }}>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 700 }}>Backup & Arquivos</h1>
+        <p style={{ color: "var(--muted)", fontSize: 14, marginTop: 4 }}>
+          Exporte os dados em arquivos JSON organizados por mês/dia — salve na pasta que preferir no seu computador
+        </p>
+      </div>
+
+      {/* Estrutura de pastas explicada */}
+      <div style={{ ...S.card, marginBottom: 20, background: "var(--card2)", border: "1px solid var(--border)" }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+          <Icon name="folder" size={22} color="var(--warn)"/>
+          <div>
+            <div style={{ fontWeight: 600, marginBottom: 6 }}>Organização sugerida de pastas</div>
+            <div style={{ fontFamily: "monospace", fontSize: 13, color: "var(--muted)", lineHeight: 1.9 }}>
+              📁 K2 Emporium/<br/>
+              &nbsp;&nbsp;📁 {monthLabel}/<br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;📄 K2_{todayLabel}.json &nbsp;<span style={{ color: "var(--accent2)" }}>← backup do dia</span><br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;📄 K2_{monthLabel}_completo.json &nbsp;<span style={{ color: "var(--accent)" }}>← backup mensal</span><br/>
+              &nbsp;&nbsp;📁 {yyyy}-{pad(now.getMonth())}/<br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;📄 ...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Ações de exportação */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 24 }}>
+        {/* Hoje */}
+        <div style={S.card}>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
+            <div style={{ background: "var(--accent2)22", borderRadius: 8, padding: 8 }}>
+              <Icon name="calendar" size={18} color="var(--accent2)"/>
+            </div>
+            <span style={{ fontWeight: 700 }}>Backup do Dia</span>
+          </div>
+          <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16, lineHeight: 1.5 }}>
+            Exporta todos os pedidos de <strong style={{ color: "var(--text)" }}>hoje ({todayLabel})</strong> + produtos cadastrados.
+          </p>
+          <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 14, fontFamily: "monospace",
+            background: "var(--card2)", padding: "6px 10px", borderRadius: 6 }}>
+            📄 K2_{todayLabel}.json
+          </div>
+          <button style={{ ...S.btn("var(--accent2)"), width: "100%", justifyContent: "center" }} onClick={exportToday}>
+            <Icon name="download" size={15}/> Exportar Hoje
+          </button>
+        </div>
+
+        {/* Mês */}
+        <div style={S.card}>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
+            <div style={{ background: "var(--accent)22", borderRadius: 8, padding: 8 }}>
+              <Icon name="folder" size={18} color="var(--accent)"/>
+            </div>
+            <span style={{ fontWeight: 700 }}>Backup Mensal</span>
+          </div>
+          <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16, lineHeight: 1.5 }}>
+            Exporta todos os pedidos de <strong style={{ color: "var(--text)" }}>{monthLabel}</strong> organizados por dia.
+          </p>
+          <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 14, fontFamily: "monospace",
+            background: "var(--card2)", padding: "6px 10px", borderRadius: 6 }}>
+            📄 K2_{monthLabel}_completo.json
+          </div>
+          <button style={{ ...S.btn(), width: "100%", justifyContent: "center" }} onClick={exportMonth}>
+            <Icon name="download" size={15}/> Exportar Mês
+          </button>
+        </div>
+
+        {/* Completo */}
+        <div style={S.card}>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
+            <div style={{ background: "var(--warn)22", borderRadius: 8, padding: 8 }}>
+              <Icon name="backup" size={18} color="var(--warn)"/>
+            </div>
+            <span style={{ fontWeight: 700 }}>Backup Completo</span>
+          </div>
+          <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16, lineHeight: 1.5 }}>
+            Exporta <strong style={{ color: "var(--text)" }}>todos os dados</strong>: todos os pedidos e produtos.
+          </p>
+          <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 14, fontFamily: "monospace",
+            background: "var(--card2)", padding: "6px 10px", borderRadius: 6 }}>
+            📄 K2_backup_{todayLabel}.json
+          </div>
+          <button style={{ ...S.btn("var(--warn)"), width: "100%", justifyContent: "center", color: "#000" }} onClick={exportAll}>
+            <Icon name="download" size={15}/> Exportar Tudo
+          </button>
+        </div>
+      </div>
+
+      {/* Importar */}
+      <div style={{ ...S.card, marginBottom: 24 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div>
+            <div style={{ fontWeight: 700, marginBottom: 4 }}>Importar Arquivo</div>
+            <div style={{ fontSize: 13, color: "var(--muted)" }}>Restaure pedidos e produtos a partir de um backup JSON</div>
+          </div>
+          <button style={S.btn()} onClick={() => importRef.current.click()}>
+            <Icon name="upload" size={15}/> Selecionar arquivo
+          </button>
+          <input ref={importRef} type="file" accept=".json" style={{ display: "none" }} onChange={handleFileChange}/>
+        </div>
+        <div style={{ background: "var(--card2)", borderRadius: 8, padding: "12px 16px", fontSize: 13, color: "var(--muted)" }}>
+          ⚠️ Apenas pedidos e produtos com IDs novos serão importados — registros duplicados são ignorados automaticamente.
+        </div>
+      </div>
+
+      {/* Histórico por mês */}
+      <div style={S.card}>
+        <div style={{ fontWeight: 700, marginBottom: 16 }}>Histórico de Pedidos por Mês</div>
+        {months.length === 0
+          ? <p style={{ color: "var(--muted)", fontSize: 14 }}>Nenhum pedido registrado ainda.</p>
+          : months.map(m => {
+            const mos = ordersByMonth[m];
+            const total = mos.reduce((s, o) => s + o.total, 0);
+            const days = [...new Set(mos.map(o => new Date(o.date).toDateString()))].length;
+            return (
+              <div key={m} style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
+                padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
+                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <div style={{ background: "var(--accent)22", borderRadius: 8, padding: 8 }}>
+                    <Icon name="folder" size={16} color="var(--accent)"/>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600 }}>📁 {m}</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>{mos.length} pedido(s) · {days} dia(s) com venda</div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <span style={{ fontWeight: 700, color: "var(--accent2)" }}>{fmt(total)}</span>
+                  <button style={{ ...S.btnGhost, fontSize: 12, padding: "5px 12px" }} onClick={() => {
+                    const [y, mo] = m.split("-").map(Number);
+                    const mos2 = orders.filter(o => {
+                      const d = new Date(o.date);
+                      return d.getFullYear() === y && d.getMonth() === mo - 1;
+                    });
+                    // agrupa por dia
+                    const byDay = {};
+                    mos2.forEach(o => {
+                      const d = new Date(o.date);
+                      const key = `${pad(d.getDate())}-${pad(d.getMonth()+1)}-${d.getFullYear()}`;
+                      if (!byDay[key]) byDay[key] = [];
+                      byDay[key].push(o);
+                    });
+                    const payload = {
+                      tipo: "backup_mensal",
+                      loja: "K2 Emporium",
+                      pasta: m,
+                      mes: m,
+                      geradoEm: new Date().toISOString(),
+                      resumo: { totalPedidos: mos2.length, totalVendas: mos2.reduce((s, o) => s + o.total, 0) },
+                      porDia: Object.entries(byDay).map(([dia, pedidos]) => ({
+                        dia, totalPedidos: pedidos.length,
+                        totalVendas: pedidos.reduce((s, o) => s + o.total, 0), pedidos,
+                      })),
+                      produtos,
+                    };
+                    downloadJSON(payload, `K2_${m}_completo.json`);
+                    showToast(`Backup de ${m} exportado!`, "ok");
+                  }}>
+                    <Icon name="download" size={13}/> Baixar
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        }
+      </div>
+
+      {/* Modal de confirmação de importação */}
+      {preview && (
+        <Modal title="Confirmar Importação" onClose={() => setPreview(null)} width={480}>
+          <div style={{ background: "var(--card2)", borderRadius: 8, padding: 16, marginBottom: 16 }}>
+            <div style={{ fontWeight: 600, marginBottom: 8 }}>📄 {preview.fileName}</div>
+            <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.8 }}>
+              <div>Tipo: <strong style={{ color: "var(--text)" }}>{preview.data.tipo || "desconhecido"}</strong></div>
+              <div>Pedidos no arquivo: <strong style={{ color: "var(--text)" }}>{preview.data.pedidos?.length || 0}</strong></div>
+              <div>Produtos no arquivo: <strong style={{ color: "var(--text)" }}>{preview.data.produtos?.length || 0}</strong></div>
+              {preview.data.geradoEm && <div>Gerado em: <strong style={{ color: "var(--text)" }}>{new Date(preview.data.geradoEm).toLocaleString("pt-BR")}</strong></div>}
+            </div>
+          </div>
+          <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 20, lineHeight: 1.5 }}>
+            Registros com IDs já existentes serão ignorados. Apenas dados novos serão adicionados.
+          </div>
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+            <button style={S.btnGhost} onClick={() => setPreview(null)}>Cancelar</button>
+            <button style={S.btn("var(--accent2)")} onClick={confirmImport}>
+              <Icon name="check" size={14}/> Confirmar Importação
+            </button>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════════════════
+   APP SHELL
+══════════════════════════════════════════════════════════════ */
+const App = () => {
+  const { useState, useEffect } = React;
+  const [page, setPage] = useState("dashboard");
+  const [products, setProducts] = useState(() => load("k2_products", SEED_PRODUCTS));
+  const [orders, setOrders] = useState(() => load("k2_orders", SEED_ORDERS));
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => { save("k2_products", products); }, [products]);
+  useEffect(() => { save("k2_orders", orders); }, [orders]);
+
+  const showToast = (msg, type = "ok") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 2800);
+  };
+
+  const NAV = [
+    { id: "dashboard", label: "Dashboard", icon: "dashboard" },
+    { id: "products", label: "Produtos", icon: "pack" },
+    { id: "orders", label: "Pedidos", icon: "orders" },
+    { id: "neworder", label: "Novo Pedido", icon: "plus" },
+    { id: "reports", label: "Relatórios", icon: "report" },
+    { id: "backup", label: "Backup", icon: "backup" },
+  ];
+
+  const openOrderCount = orders.filter(o => o.status === "aberto").length;
+
+  return (
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
+      {/* Sidebar */}
+      <aside style={{
+        width: "var(--sidebar-w)", flexShrink: 0, background: "var(--card)",
+        borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column",
+        height: "100vh",
+      }}>
+        {/* Logo */}
+        <div style={{ padding: "22px 20px 18px", borderBottom: "1px solid var(--border)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 9, background: "var(--accent)",
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Icon name="pack" size={17} color="#fff"/>
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 14, lineHeight: 1.1 }}>K2 Emporium</div>
+              <div style={{ fontSize: 11, color: "var(--muted)" }}>Sistema de Vendas</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: "14px 10px", display: "flex", flexDirection: "column", gap: 2 }}>
+          {NAV.map(n => (
+            <button key={n.id}
+              style={{
+                display: "flex", alignItems: "center", gap: 10, width: "100%",
+                background: page === n.id ? "var(--accent)22" : "transparent",
+                color: page === n.id ? "var(--accent)" : "var(--muted)",
+                border: "none", borderRadius: 8, padding: "10px 12px", cursor: "pointer",
+                fontWeight: page === n.id ? 600 : 400, fontSize: 14, textAlign: "left",
+                transition: "background .15s, color .15s",
+                position: "relative",
+              }}
+              onClick={() => setPage(n.id)}>
+              <Icon name={n.icon} size={17} color={page === n.id ? "var(--accent)" : "var(--muted)"}/>
+              <span>{n.label}</span>
+              {n.id === "orders" && openOrderCount > 0 && (
+                <span style={{ marginLeft: "auto", background: "var(--warn)", color: "#000",
+                  borderRadius: 99, fontSize: 11, fontWeight: 700, padding: "1px 7px" }}>
+                  {openOrderCount}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        <div style={{ padding: "14px 20px", borderTop: "1px solid var(--border)", fontSize: 12, color: "var(--muted)" }}>
+          {new Date().toLocaleDateString("pt-BR")}
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <main style={{ flex: 1, overflowY: "auto" }}>
+        {page === "dashboard" && <Dashboard products={products} orders={orders} setPage={setPage}/>}
+        {page === "products" && <Products products={products} setProducts={setProducts} showToast={showToast}/>}
+        {page === "orders" && <Orders orders={orders} setOrders={setOrders} setPage={setPage} showToast={showToast}/>}
+        {page === "neworder" && <NewOrder products={products} setProducts={setProducts} setOrders={setOrders} showToast={showToast} setPage={setPage}/>}
+        {page === "reports" && <Reports orders={orders} products={products}/>}
+        {page === "backup" && <Backup products={products} orders={orders} setProducts={setProducts} setOrders={setOrders} showToast={showToast}/>}
+      </main>
+
+      {toast && <Toast msg={toast.msg} type={toast.type}/>}
+
+      {/* Tweaks */}
+      <TweaksPanel defaults={TWEAK_DEFAULTS} onUpdate={v => {
+        document.documentElement.style.setProperty("--accent", v.accentColor);
+        document.documentElement.style.setProperty("--accent2", v.accentGreen);
+        document.documentElement.style.setProperty("font-size", v.fontSize + "px");
+      }}>
+        <TweakSection title="Cores">
+          <TweakColor id="accentColor" label="Cor Principal"/>
+          <TweakColor id="accentGreen" label="Cor Secundária"/>
+        </TweakSection>
+        <TweakSection title="Tipografia">
+          <TweakSlider id="fontSize" label="Tamanho Base" min={12} max={18} step={1}/>
+        </TweakSection>
+      </TweaksPanel>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+<style>
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+input:focus, select:focus, textarea:focus { border-color: var(--accent) !important; }
+button:hover { opacity: .85; }
+</style>
+<template id="__bundler_thumbnail" data-bg-color="#0d0f18">
+  <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
+    <rect width="120" height="80" fill="#0d0f18"/>
+    <rect x="8" y="8" width="24" height="64" rx="4" fill="#181c2a" stroke="#2a2f47" stroke-width="0.5"/>
+    <rect x="10" y="12" width="20" height="8" rx="2" fill="#4f8ef7" opacity="0.3"/>
+    <rect x="10" y="23" width="20" height="5" rx="1.5" fill="#4f8ef7" opacity="0.15"/>
+    <rect x="10" y="31" width="20" height="5" rx="1.5" fill="#4f8ef7" opacity="0.15"/>
+    <rect x="10" y="39" width="20" height="5" rx="1.5" fill="#4f8ef7" opacity="0.15"/>
+    <rect x="36" y="8" width="76" height="64" rx="4" fill="#181c2a" stroke="#2a2f47" stroke-width="0.5"/>
+    <rect x="40" y="13" width="30" height="8" rx="2" fill="#3fcf8e" opacity="0.4"/>
+    <rect x="74" y="13" width="20" height="8" rx="2" fill="#4f8ef7" opacity="0.4"/>
+    <rect x="40" y="26" width="66" height="14" rx="2" fill="#1f2438"/>
+    <rect x="40" y="44" width="30" height="12" rx="2" fill="#1f2438"/>
+    <rect x="74" y="44" width="32" height="12" rx="2" fill="#1f2438"/>
+    <text x="60" y="21" font-size="5" fill="#3fcf8e" font-family="monospace" font-weight="bold">K2 EMPORIUM</text>
+  </svg>
+</template>
+</body>
+</html>

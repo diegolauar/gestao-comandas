@@ -1,0 +1,89 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg:       #0a0a0a;
+  --bg2:      #111111;
+  --card:     #1a1a1a;
+  --card2:    #222222;
+  --border:   #2a2a2a;
+  --text:     #f0f0f0;
+  --muted:    #888888;
+
+  --gold:     #D4AF37;
+  --gold2:    #F0D060;
+  --gold-dim: #C9A84C;
+
+  --danger:   #e63946;
+  --warn:     #f4a261;
+  --success:  #3fcf8e;
+
+  --sidebar-w: 220px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --font: 'Inter', 'DM Sans', system-ui, sans-serif;
+  font-size: 14px;
+}
+
+html, body, #root {
+  height: 100%;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+}
+
+input, select, textarea, button {
+  font-family: var(--font);
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--gold) !important;
+  outline: none;
+}
+
+button { cursor: pointer; }
+button:hover { opacity: 0.85; }
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+#print-receipt { display: none; }
+
+@media print {
+  body > * { display: none !important; }
+  #print-receipt {
+    display: block !important;
+    font-family: monospace;
+    font-size: 12px;
+    color: #000;
+    background: #fff;
+    padding: 12px;
+    max-width: 320px;
+  }
+  #print-receipt h2 { text-align: center; font-size: 15px; margin-bottom: 4px; }
+  #print-receipt .pr-meta { font-size: 11px; color: #444; margin-bottom: 3px; }
+  #print-receipt .pr-divider { border: none; border-top: 1px dashed #000; margin: 8px 0; }
+  #print-receipt table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  #print-receipt th { border-bottom: 1px solid #000; padding: 3px 0; text-align: left; }
+  #print-receipt td { padding: 3px 0; vertical-align: top; }
+  #print-receipt td:nth-child(2) { text-align: center; }
+  #print-receipt td:nth-child(3), #print-receipt td:nth-child(4) { text-align: right; }
+  #print-receipt .pr-total { text-align: right; font-weight: bold; font-size: 13px; margin-top: 8px; }
+  #print-receipt .pr-obs { font-size: 11px; color: #555; margin-top: 8px; }
+}
